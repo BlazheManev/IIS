@@ -4,7 +4,6 @@ import pandas as pd
 from lxml import etree as ET
 
 def preprocess_air_data():
-    # Read XML file
     with open("data/raw/air/air_data.xml", "rb") as file:
         tree = ET.parse(file)
         root = tree.getroot()
@@ -16,7 +15,6 @@ def preprocess_air_data():
     print(f"Suggested Capture Period: {root.find('predlagan_zajem_perioda').text}")
     print(f"Preparation Date: {root.find('datum_priprave').text}")
 
-    # Ustvari mapo za shranjevanje če še ne obstaja
     os.makedirs("data/preprocessed/air", exist_ok=True)
 
     # Dobimo vse šifre postaj
