@@ -1,12 +1,16 @@
 import requests
 from datetime import datetime
-import xml.etree.ElementTree as ET
+
 import yaml
 
+
 def fetch_air_data():
+    # Load configuration from YAML file
+    params = yaml.safe_load(open("params.yaml"))["fetch"]
+
     try:
         # URL to fetch the XML data
-        url = "https://www.arso.gov.si/xml/zrak/ones_zrak_urni_podatki_7dni.xml"
+        url = params["url"]
 
         # Fetch the XML data
         response = requests.get(url)
@@ -23,6 +27,7 @@ def fetch_air_data():
     except requests.RequestException as e:
         # Print error message if there is a problem fetching the file
         print(f"Error fetching data: {e}")
+
 
 if __name__ == "__main__":
     fetch_air_data()

@@ -1,50 +1,74 @@
 import os
+import yaml
+
 import numpy as np
 import pandas as pd
 from lxml import etree as ET
 
+
 def preprocess_air_data():
+    # Load configuration from YAML file
+    params = yaml.safe_load(open("params.yaml"))["preprocess"]
+
+    # Open XML file
     with open("data/raw/air/air_data.xml", "rb") as file:
         tree = ET.parse(file)
         root = tree.getroot()
 
-    # Print some metadata
+    # Extract and print data
     print(f"Version: {root.attrib['verzija']}")
     print(f"Source: {root.find('vir').text}")
     print(f"Suggested Capture: {root.find('predlagan_zajem').text}")
     print(f"Suggested Capture Period: {root.find('predlagan_zajem_perioda').text}")
     print(f"Preparation Date: {root.find('datum_priprave').text}")
 
+    sifra_vals = set(tree.xpath('//postaja/@sifra'))
+
+    sifra = params["station"]
+
+    if sifra not in sifra_vals:
+        raise ValueError(f"Invalid station code: {sifra}. Available codes: {sifra_vals}")
+
+    postaja_elements = tree.xpath(f'//postaja[@sifra="{sifra}"]')
+
+    # Initialize an empty DataFrame
+    columns = ["date_to", "PM10", "PM2.5"]
+    df = pd.DataFrame(columns=columns)
+
+    # Check if csv file already exists
+    if os.path.exists(f"data/preprocessed/air/{sifra}.csv"):
+        print(f"File already exists: data/preprocessed/air/{sifra}.csv")
+
+        # Load the existing DataFrame
+        df = pd.read_csv(f"data/preprocessed/air/{sifra}.csv")
+        print("Loaded existing DataFrame:\n", df.head())
+
+    # Convert the XML data to a DataFrame
+    for postaja in postaja_elements:
+        date_to = postaja.find('datum_do').text
+        pm10 = postaja.find('pm10').text if postaja.find('pm10') is not None else np.nan
+        pm2_5 = postaja.find('pm2.5').text if postaja.find('pm2.5') is not None else np.nan
+
+        # Append the data as a new row in the DataFrame
+        df = pd.concat([df, pd.DataFrame([[date_to, pm10, pm2_5]], columns=columns)], ignore_index=True)
+
+    # Filter unique "datum_do" values
+    df = df.drop_duplicates(subset=["date_to"])
+
+    # Sort the DataFrame by the "date_to" column
+    df = df.sort_values(by="date_to")
+
+    # Replace string values
+    df = df.replace("", np.nan)
+    df = df.replace("<1", 1)
+    df = df.replace("<2", 2)
+
+    # Create the output directory if it doesn't exist
     os.makedirs("data/preprocessed/air", exist_ok=True)
 
-    # Dobimo vse šifre postaj
-    sifre = set(elem.attrib["sifra"] for elem in root.findall(".//postaja"))
+    # Save the DataFrame to a CSV file
+    df.to_csv(f"data/preprocessed/air/{sifra}.csv", index=False)
 
-    print(f"Found {len(sifre)} postaj: {sorted(sifre)}")
-
-    for sifra in sifre:
-        postaje = root.findall(f".//postaja[@sifra='{sifra}']")
-        rows = []
-
-        for postaja in postaje:
-            date_to = postaja.findtext("datum_do")
-            pm10 = postaja.findtext("pm10") or np.nan
-            pm2_5 = postaja.findtext("pm2.5") or np.nan
-
-            rows.append([date_to, pm10, pm2_5])
-
-        df = pd.DataFrame(rows, columns=["Date_to", "PM10", "PM2.5"])
-        df = df.replace("", np.nan)
-        df = df.replace("<1", 1).replace("<2", 2)
-        df["Date_to"] = pd.to_datetime(df["Date_to"])
-        df["PM10"] = pd.to_numeric(df["PM10"], errors="coerce")
-        df["PM2.5"] = pd.to_numeric(df["PM2.5"], errors="coerce")
-
-        df = df.sort_values("Date_to")
-
-        output_path = f"data/preprocessed/air/{sifra}.csv"
-        df.to_csv(output_path, index=False)
-        print(f"✔️ Shranjeno: {output_path}")
 
 if __name__ == "__main__":
     preprocess_air_data()

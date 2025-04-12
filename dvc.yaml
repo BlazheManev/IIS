@@ -6,11 +6,11 @@ stages:
       git push || true
       dvc push || true
     deps:
-    - src/data/fetch_air_data.py
+      - src/data/fetch_air_data.py
     params:
-    - fetch.url
+      - fetch.url
     outs:
-    - data/raw/air/air_data.xml
+      - data/raw/air/air_data.xml
     always_changed: true
 
   preprocess:
@@ -20,10 +20,8 @@ stages:
       git push || true
       dvc push || true
     deps:
-    - src/data/preprocess_air_data.py
-    - data/raw/air/air_data.xml
-    params:
-    - preprocess.station
+      - src/data/preprocess_air_data.py
+      - data/raw/air/air_data.xml
     outs:
-    - data/preprocessed/air:
-        persist: true
+      - data/preprocessed/air:
+          persist: true
