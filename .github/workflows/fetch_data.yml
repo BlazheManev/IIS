@@ -3,7 +3,7 @@ name: Fetch data on schedule
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/10 * * * *"  # Every 10 minutes
+    - cron: '0 0 * * *'
 
 jobs:
   fetch_air:
