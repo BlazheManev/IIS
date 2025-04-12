@@ -1,0 +1,10 @@
+stages:
+  fetch:
+    cmd: poetry run python src/data/fetch_air_data.py
+    deps:
+    - src/data/fetch_air_data.py
+    params:
+    - fetch.url
+    outs:
+    - data/raw/air/air_data.xml
+    always_changed: true
