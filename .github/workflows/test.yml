@@ -1,0 +1,23 @@
+name: 🔐 Debug DVC Secrets
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-secrets:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧪 Check for DAGSHUB secrets
+        run: |
+          if [ -z "${{ secrets.DAGSHUB_ACCESS_KEY_ID }}" ]; then
+            echo "❌ DAGSHUB_ACCESS_KEY_ID is missing!"
+          else
+            echo "✅ DAGSHUB_ACCESS_KEY_ID is set."
+          fi
+
+          if [ -z "${{ secrets.DAGSHUB_SECRET_ACCESS_KEY }}" ]; then
+            echo "❌ DAGSHUB_SECRET_ACCESS_KEY is missing!"
+          else
+            echo "✅ DAGSHUB_SECRET_ACCESS_KEY is set."
+          fi
