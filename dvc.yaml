@@ -2,30 +2,28 @@ stages:
   fetch:
     cmd: |
       poetry run python src/data/fetch_air_data.py
-      git add data/raw/air/air_data.xml
-      git commit -m "Updated raw air data on %DATE% %TIME% with DVC pipeline and GitHub workflows" || echo skipping git commit
-      git push
-      dvc push
+      git commit -am "Updated raw air data on `date` with DVC pipeline and GitHub workflows" || true
+      git push || true
+      dvc push || true
     deps:
-      - src/data/fetch_air_data.py
+    - src/data/fetch_air_data.py
     params:
-      - fetch.url
+    - fetch.url
     outs:
-      - data/raw/air/air_data.xml
+    - data/raw/air/air_data.xml
     always_changed: true
 
   preprocess:
     cmd: |
       poetry run python src/data/preprocess_air_data.py
-      git add data/preprocessed/
-      git commit -m "Updated preprocessed air data on %DATE% %TIME% with DVC pipeline and GitHub workflows" || echo skipping git commit
-      git push
-      dvc push
+      git commit -am "Updated preprocessed air data on `date` with DVC pipeline and GitHub workflows" || true
+      git push || true
+      dvc push || true
     deps:
-      - src/data/preprocess_air_data.py
-      - data/raw/air/air_data.xml
+    - src/data/preprocess_air_data.py
+    - data/raw/air/air_data.xml
     params:
-      - preprocess.station
+    - preprocess.station
     outs:
-      - data/preprocessed/air:
-          persist: true
+    - data/preprocessed/air:
+        persist: true
