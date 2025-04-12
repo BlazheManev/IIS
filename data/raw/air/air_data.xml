@@ -3,7 +3,7 @@
 <vir>Agencija RS za okolje</vir>
 <predlagan_zajem>45 minut &#269;ez polno uro</predlagan_zajem>
 <predlagan_zajem_perioda>60 min</predlagan_zajem_perioda>
-<datum_priprave>2025-04-12 11:16</datum_priprave>
+<datum_priprave>2025-04-12 11:36</datum_priprave>
 <postaja sifra="E403" d96_e="462302.09" d96_n="102976.48" wgs84_dolzina="14.5127203" wgs84_sirina="46.0655449" nadm_visina="299"><merilno_mesto>LJ Bežigrad</merilno_mesto><datum_od>2025-04-12 10:00</datum_od><datum_do>2025-04-12 11:00</datum_do><co>0.2</co><o3>83</o3><no2></no2><pm10>19</pm10><pm2.5>10</pm2.5><benzen></benzen></postaja>
 <postaja sifra="E405" d96_e="460326.11" d96_n="103716.53" wgs84_dolzina="14.4871183" wgs84_sirina="46.0720916" nadm_visina="305"><merilno_mesto>LJ Celovška</merilno_mesto><datum_od>2025-04-12 10:00</datum_od><datum_do>2025-04-12 11:00</datum_do><no2>11</no2><pm10></pm10><pm2.5></pm2.5></postaja>
 <postaja sifra="E404" d96_e="460468" d96_n="99869.47" wgs84_dolzina="14.4892717" wgs84_sirina="46.037487" nadm_visina="293"><merilno_mesto>LJ Vič</merilno_mesto><datum_od>2025-04-12 10:00</datum_od><datum_do>2025-04-12 11:00</datum_do><pm10>20</pm10><pm2.5>11</pm2.5></postaja>
