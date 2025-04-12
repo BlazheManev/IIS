@@ -8,3 +8,10 @@ stages:
     outs:
     - data/raw/air/air_data.xml
     always_changed: true
+  preprocess:
+    cmd: poetry run python src/data/preprocess_air_data.py
+    deps:
+    - data/raw/air/air_data.xml
+    - src/data/preprocess_air_data.py
+    outs:
+    - data/preprocessed/air
