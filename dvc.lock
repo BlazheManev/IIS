@@ -7,16 +7,16 @@ stages:
     deps:
     - path: src/data/fetch_air_data.py
       hash: md5
-      md5: d11371e51e33eb21a82994a88c206041
-      size: 956
+      md5: 16197c4c7f50f5fbd3a036230766d288
+      size: 924
     params:
       params.yaml:
         fetch.url: https://www.arso.gov.si/xml/zrak/ones_zrak_urni_podatki_7dni.xml
     outs:
     - path: data/raw/air/air_data.xml
       hash: md5
-      md5: 71d58786b256066bf1edcad90e613532
-      size: 1149797
+      md5: e5ac395c3e452be0b6e37b85a4e3906b
+      size: 1150905
   preprocess:
     cmd: "poetry run python src/data/preprocess_air_data.py\ngit commit -am \"Updated
       preprocessed air data on `date` with DVC pipeline and GitHub workflows\" ||
