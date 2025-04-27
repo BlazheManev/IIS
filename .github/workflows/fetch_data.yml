@@ -21,8 +21,9 @@ jobs:
         run: |
           pipx install poetry
 
-      - name: Setup DVC
-        uses: iterative/setup-dvc@v1
+      - name: Install DVC
+        run: |
+          pip install dvc[s3]
 
       - name: Setup Python
         uses: actions/setup-python@v4
