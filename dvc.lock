@@ -24,8 +24,8 @@ stages:
     deps:
     - path: data/raw/air/air_data.xml
       hash: md5
-      md5: 08506ab81eb52af54a57e39ba87bf6da
-      size: 1150153
+      md5: 973b354d3def8b84fe77c4b28ee611b2
+      size: 1149687
     - path: src/data/preprocess_air_data.py
       hash: md5
       md5: 4c05872692adee6ae1662f50b0d90a7f
@@ -36,6 +36,6 @@ stages:
     outs:
     - path: data/preprocessed/air
       hash: md5
-      md5: 8439f5bb708fa289df6815f4abd34bbc.dir
-      size: 95755
+      md5: 047f5162dbc1c78242daf9f88a035a19.dir
+      size: 95541
       nfiles: 23
