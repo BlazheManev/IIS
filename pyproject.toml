@@ -14,7 +14,9 @@ dependencies = [
     "requests (>=2.32.3,<3.0.0)",
     "lxml (>=5.3.2,<6.0.0)",
     "pyaml (>=25.1.0,<26.0.0)",
-    "great-expectations (==0.18.21)"
+    "great-expectations (==0.18.21)",
+    "notebook (>=7.4.3,<8.0.0)",
+    "ipykernel (>=6.29.5,<7.0.0)"
 ]
 
 
