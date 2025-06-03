@@ -105,8 +105,70 @@ fluent_datasources:
   air_quality:
     type: pandas_filesystem
     assets:
-      air_quality_data:
+      air_quality_data_E403:
         type: csv
-        connect_options:
-          glob_directive: preprocessed/air/E410.csv
-    base_directory: ..\data
+        batching_regex: E403.csv
+      air_quality_data_E404:
+        type: csv
+        batching_regex: E404.csv
+      air_quality_data_E405:
+        type: csv
+        batching_regex: E405.csv
+      air_quality_data_E407:
+        type: csv
+        batching_regex: E407.csv
+      air_quality_data_E409:
+        type: csv
+        batching_regex: E409.csv
+      air_quality_data_E410:
+        type: csv
+        batching_regex: E410.csv
+      air_quality_data_E411:
+        type: csv
+        batching_regex: E411.csv
+      air_quality_data_E412:
+        type: csv
+        batching_regex: E412.csv
+      air_quality_data_E413:
+        type: csv
+        batching_regex: E413.csv
+      air_quality_data_E414:
+        type: csv
+        batching_regex: E414.csv
+      air_quality_data_E415:
+        type: csv
+        batching_regex: E415.csv
+      air_quality_data_E417:
+        type: csv
+        batching_regex: E417.csv
+      air_quality_data_E418:
+        type: csv
+        batching_regex: E418.csv
+      air_quality_data_E419:
+        type: csv
+        batching_regex: E419.csv
+      air_quality_data_E420:
+        type: csv
+        batching_regex: E420.csv
+      air_quality_data_E421:
+        type: csv
+        batching_regex: E421.csv
+      air_quality_data_E423:
+        type: csv
+        batching_regex: E423.csv
+      air_quality_data_E424:
+        type: csv
+        batching_regex: E424.csv
+      air_quality_data_E801:
+        type: csv
+        batching_regex: E801.csv
+      air_quality_data_E802:
+        type: csv
+        batching_regex: E802.csv
+      air_quality_data_E803:
+        type: csv
+        batching_regex: E803.csv
+      air_quality_data_E804:
+        type: csv
+        batching_regex: E804.csv
+    base_directory: ..\data\preprocessed\air

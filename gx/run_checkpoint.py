@@ -2,62 +2,49 @@ import os
 import sys
 import great_expectations as gx
 
+# 1. Inicializacija konteksta
 context = gx.get_context()
 
 datasource_name = "air_quality"
-expectation_suite_name = "air_quality_suite"
-base_path = "data"  # relative to project root
+base_dir = "../data/preprocessed/air"
 
-# Make sure the datasource is available
-if datasource_name not in context.datasources:
-    context.sources.add_pandas_filesystem(
-        name=datasource_name,
-        base_directory=base_path,
-    )
+# 2. Pridobi vse E*.csv datoteke
+csv_files = [f for f in os.listdir(base_dir) if f.startswith("E") and f.endswith(".csv")]
 
-datasource = context.get_datasource(datasource_name)
+# 3. Validiraj vsako datoteko posebej
+all_passed = True
 
-# Get all CSV files for stations
-data_folder = os.path.join(base_path, "preprocessed", "air")
-all_csvs = [f for f in os.listdir(data_folder) if f.endswith(".csv")]
+for csv_file in csv_files:
+    station_code = csv_file.replace(".csv", "")
+    asset_name = f"air_quality_data_{station_code}"
+    checkpoint_name = f"checkpoint_{station_code}"
 
-any_failed = False
+    print(f"\n🚦 Zagon checkpointa za: {station_code}")
 
-for csv_file in all_csvs:
-    station_id = os.path.splitext(csv_file)[0]  # E.g., E403
-    asset_name = f"air_quality_{station_id.lower()}"  # unique asset name per station
+    try:
+        asset = context.get_datasource(datasource_name).get_asset(asset_name)
+        checkpoint = context.get_checkpoint(checkpoint_name)
+    except Exception as e:
+        print(f"❌ Napaka pri nalaganju za {station_code}: {e}")
+        all_passed = False
+        continue
 
-    print(f"\n▶ Validating: {csv_file}")
-
-    # Register the CSV file as an asset
-    asset = datasource.add_csv_asset(
-        name=asset_name,
-        glob_directive=f"preprocessed/air/{csv_file}"
-    )
-
-    # Build batch request
-    batch_request = asset.build_batch_request()
-
-    # Create a unique checkpoint name
-    checkpoint_name = f"checkpoint_{station_id.lower()}"
-
-    # Add/update and run checkpoint
-    checkpoint = context.add_or_update_checkpoint(
-        name=checkpoint_name,
-        validations=[{
-            "batch_request": batch_request,
-            "expectation_suite_name": expectation_suite_name,
-        }],
-    )
-
-    result = checkpoint.run()
-    context.build_data_docs()
+    # Zaženi checkpoint
+    result = checkpoint.run(run_id=f"{station_code}_run")
 
     if result["success"]:
-        print(f"✅ {csv_file} PASSED validation")
+        print(f"✅ {station_code}: Validation passed!")
     else:
-        print(f"❌ {csv_file} FAILED validation")
-        any_failed = True
+        print(f"❌ {station_code}: Validation failed!")
+        all_passed = False
 
-# Final status
-sys.exit(1 if any_failed else 0)
+# 4. Zgradi data docs enkrat na koncu
+context.build_data_docs()
+
+# 5. Končna odločitev
+if all_passed:
+    print("\n✅ Vse validacije uspešne!")
+    sys.exit(0)
+else:
+    print("\n❌ Ena ali več validacij je padla.")
+    sys.exit(1)
