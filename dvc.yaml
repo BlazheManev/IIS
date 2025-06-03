@@ -27,3 +27,12 @@ stages:
     outs:
     - data/preprocessed/air:
         persist: true
+
+  validate:
+    cmd: |
+      cd gx && poetry run python run_checkpoint.py
+    deps:
+    - data/preprocessed/air/
+    outs:
+    - gx:
+        persist: true
