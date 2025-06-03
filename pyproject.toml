@@ -6,7 +6,7 @@ authors = [
     {name = "Blazhe Manev",email = "blaze_manev@yahoo.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "numpy (>=1.22.4,<2.0.0)",
     "pandas (>=2.2.3,<3.0.0)",
@@ -16,7 +16,8 @@ dependencies = [
     "pyaml (>=25.1.0,<26.0.0)",
     "great-expectations (==0.18.21)",
     "notebook (>=7.4.3,<8.0.0)",
-    "ipykernel (>=6.29.5,<7.0.0)"
+    "ipykernel (>=6.29.5,<7.0.0)",
+    "evidently (>=0.7.1,<0.8.0)"
 ]
 
 
