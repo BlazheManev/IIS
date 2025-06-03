@@ -46,7 +46,7 @@ jobs:
           dvc remote modify origin --local secret_access_key ${{ secrets.DAGSHUB_SECRET_ACCESS_KEY }}
 
       - name: List preprocessed data files for debugging
-        run: ls -l data/preprocessed/air
+        run: ls -l air
 
       - name: Run DVC pipeline
         run: |
