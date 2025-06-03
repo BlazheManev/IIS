@@ -21,30 +21,37 @@ jobs:
         run: |
           pipx install poetry
 
+      - name: Setup DVC
+        uses: iterative/setup-dvc@v1
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
           cache: poetry
 
+      - name: Setup Git
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+
       - name: Install dependencies
         run: |
           poetry install --no-interaction --no-root
 
-      - name: Run fetch script
+      - name: DVC setup remote
         run: |
-          poetry run python src/data/fetch_air_data.py
+          dvc remote modify origin --local access_key_id ${{ secrets.DAGSHUB_ACCESS_KEY_ID }}
+          dvc remote modify origin --local secret_access_key ${{ secrets.DAGSHUB_SECRET_ACCESS_KEY }}
 
-      - name: Run pre-process script
+      - name: Run DVC pipeline
         run: |
-          poetry run python src/data/preprocess_air_data.py
-
-      - name: Commit data changes
-        run: |
-          git add data
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
-          git commit -m "Updated raw air data on `date` with GitHub Actions"
+          dvc pull
+          dvc status
+          dvc repro
+          dvc push
+          git add dvc.lock
+          git commit -m "Update dvc.lock on `date` with GitHub Actions" || true
 
       - name: Push changes
         uses: ad-m/github-push-action@master
