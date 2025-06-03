@@ -7,7 +7,7 @@ on:
 
 jobs:
   fetch_air:
-    name: Fetch and pre-process air data
+    name: Fetch, process, validate and deploy air data
     runs-on: ubuntu-latest
 
     steps:
@@ -45,9 +45,6 @@ jobs:
           dvc remote modify origin --local access_key_id ${{ secrets.DAGSHUB_ACCESS_KEY_ID }}
           dvc remote modify origin --local secret_access_key ${{ secrets.DAGSHUB_SECRET_ACCESS_KEY }}
 
-      - name: List all files and folders recursively
-        run: ls -laR
-
       - name: Run DVC pipeline
         run: |
           dvc pull --force
@@ -61,3 +58,12 @@ jobs:
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.PAT_TOKEN }}
+
+      - name: Deploy Great Expectations docs to Netlify
+        uses: nwtgck/actions-netlify@v2.0.0
+        with:
+          publish-dir: ./gx/uncommitted/data_docs/local_site
+          production-deploy: true
+          deploy-message: "Auto-deployed from GitHub Actions"
+          netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          site-id: ${{ secrets.NETLIFY_SITE_ID }}

@@ -6,11 +6,11 @@ stages:
       git push || true
       dvc push || true
     deps:
-    - src/data/fetch_air_data.py
+      - src/data/fetch_air_data.py
     params:
-    - fetch.url
+      - fetch.url
     outs:
-    - data/raw/air/air_data.xml
+      - data/raw/air/air_data.xml
     always_changed: true
 
   preprocess:
@@ -20,16 +20,20 @@ stages:
       git push || true
       dvc push || true
     deps:
-    - src/data/preprocess_air_data.py
-    - data/raw/air/air_data.xml
+      - src/data/preprocess_air_data.py
+      - data/raw/air/air_data.xml
     params:
-    - preprocess.station
+      - preprocess.station
     outs:
-    - data/preprocessed/air:
-        persist: true
+      - data/preprocessed/air:
+          persist: true
 
   validate:
     cmd: |
       cd gx && poetry run python run_checkpoint.py
     deps:
-    - data/preprocessed/air/
+      - data/preprocessed/air/
+    outs:
+      - gx/uncommitted/data_docs/local_site:
+          persist: true
+          cache: false
