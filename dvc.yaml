@@ -30,5 +30,5 @@ stages:
     - data/preprocessed/air/
     - src/data/test_data.py
     outs:
-    - data/reference/air:
+    - reports/:
         persist: true
