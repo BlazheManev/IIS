@@ -1,13 +1,16 @@
 import requests
 from datetime import datetime
+import os
 
 import yaml
 
 
 def fetch_air_data():
     # Load configuration from YAML file
-    params = yaml.safe_load(open("params.yaml"))["fetch"]
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+    param_path = os.path.join(project_root, "params.yaml")
 
+    params = yaml.safe_load(open(param_path))["fetch"]
     try:
         # URL to fetch the XML data
         url = params["url"]
