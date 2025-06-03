@@ -39,3 +39,17 @@ stages:
       md5: 4993ede4635d36806c5cb26e9e7f14b3.dir
       size: 96037
       nfiles: 23
+  validate:
+    cmd: "cd gx && poetry run python run_checkpoint.py\n"
+    deps:
+    - path: data/preprocessed/air/
+      hash: md5
+      md5: 4993ede4635d36806c5cb26e9e7f14b3.dir
+      size: 96037
+      nfiles: 23
+    outs:
+    - path: gx
+      hash: md5
+      md5: acc392c362641d166252a30b80b63ed3.dir
+      size: 14143693
+      nfiles: 368
