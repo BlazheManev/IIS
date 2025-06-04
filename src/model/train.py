@@ -8,7 +8,7 @@ import tensorflow as tf
 import tf2onnx
 import mlflow
 import mlflow.tensorflow
-import dagshub  # ✅ DagsHub integration
+from dagshub import dagshub
 
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -21,7 +21,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 
 from preprocess import DatePreprocessor, SlidingWindowTransformer
 
-# Load training params
+# Load training config
 params = yaml.safe_load(open("params.yaml"))["train"]
 test_size = params["test_size"]
 window_size = params["window_size"]
@@ -37,12 +37,10 @@ random.seed(random_state)
 np.random.seed(random_state)
 tf.random.set_seed(random_state)
 
-# ✅ DagsHub MLflow integration (no need for set_tracking_uri)
-dagshub.init(repo_owner="blazhemanev", repo_name="IIS", mlflow=True)
-
+# DagsHub MLflow integration
 mlflow.set_experiment("iis_training")
 
-# Loop through station data
+# Loop through stations
 data_dir = "data/preprocessed/air"
 for file_name in os.listdir(data_dir):
     if not file_name.endswith(".csv"):
@@ -58,72 +56,65 @@ for file_name in os.listdir(data_dir):
 
     df = df[["date_to", target_col]]
     date_preprocessor = DatePreprocessor("date_to")
-    df = date_preprocessor.fit_transform(df)
-    df = df.drop(columns=["date_to"])
+    df = date_preprocessor.fit_transform(df).drop(columns=["date_to"])
 
     if len(df) <= test_size + window_size:
         print(f"⚠️ Skipping {station}: not enough data.")
         continue
 
-    df_test = df.iloc[-test_size:]
     df_train = df.iloc[:-test_size]
+    df_test = df.iloc[-test_size:]
 
     numeric_transformer = Pipeline([
-        ("fillna", SimpleImputer(strategy="mean")),
-        ("normalize", MinMaxScaler())
+        ("imputer", SimpleImputer(strategy="mean")),
+        ("scaler", MinMaxScaler())
     ])
 
     preprocess = ColumnTransformer([
-        ("numeric_transformer", numeric_transformer, [target_col])
+        ("num", numeric_transformer, [target_col])
     ])
 
-    sliding_window_transformer = SlidingWindowTransformer(window_size)
-
+    sliding = SlidingWindowTransformer(window_size)
     pipeline = Pipeline([
-        ("preprocess", preprocess),
-        ("sliding_window_transformer", sliding_window_transformer)
+        ("pre", preprocess),
+        ("window", sliding)
     ])
 
     try:
         X_train, y_train = pipeline.fit_transform(df_train)
         X_test, y_test = pipeline.transform(df_test)
     except Exception as e:
-        print(f"❌ Failed on station {station}: {e}")
+        print(f"❌ Failed for {station}: {e}")
         continue
 
     input_shape = (X_train.shape[1], X_train.shape[2])
 
-    def build_model(input_shape):
+    def build_model(shape):
         model = Sequential()
-        model.add(LSTM(50, return_sequences=True, input_shape=input_shape))
+        model.add(LSTM(50, return_sequences=True, input_shape=shape))
         model.add(Dropout(0.2))
-        model.add(LSTM(50, return_sequences=False))
+        model.add(LSTM(50))
         model.add(Dropout(0.2))
         model.add(Dense(1))
         model.compile(optimizer="adam", loss="mean_squared_error")
         return model
 
     with mlflow.start_run(run_name=f"train_{station}"):
-        mlflow.log_param("station", station)
-        mlflow.log_param("test_size", test_size)
-        mlflow.log_param("window_size", window_size)
-        mlflow.log_param("random_state", random_state)
-        mlflow.log_param("target_col", target_col)
+        mlflow.log_params({
+            "station": station,
+            "test_size": test_size,
+            "window_size": window_size,
+            "target_col": target_col,
+            "random_state": random_state
+        })
 
         mlflow.tensorflow.autolog()
 
         model = build_model(input_shape)
-        early_stopping = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True)
+        early_stop = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True)
 
         print(f"🚀 Training model for {station}...")
-        model.fit(
-            X_train, y_train,
-            epochs=50,
-            batch_size=32,
-            validation_split=0.2,
-            callbacks=[early_stopping],
-            verbose=1
-        )
+        model.fit(X_train, y_train, epochs=50, batch_size=32, validation_split=0.2, callbacks=[early_stop], verbose=1)
 
         print(f"📊 Evaluating model for {station}...")
         y_pred = model.predict(X_test)
@@ -131,18 +122,19 @@ for file_name in os.listdir(data_dir):
         mae = mean_absolute_error(y_test, y_pred)
         rmse = np.sqrt(mse)
 
-        print(f"✅ {station} - MAE: {mae:.4f}, MSE: {mse:.4f}, RMSE: {rmse:.4f}")
-        mlflow.log_metric("mae", mae)
-        mlflow.log_metric("mse", mse)
-        mlflow.log_metric("rmse", rmse)
+        mlflow.log_metrics({
+            "mae": mae,
+            "mse": mse,
+            "rmse": rmse
+        })
 
-        # Save Keras model
+        print(f"✅ {station} - MAE: {mae:.4f}, MSE: {mse:.4f}, RMSE: {rmse:.4f}")
+
+        # Save models
         keras_path = f"{model_dir}/model_{station}.keras"
         model.save(keras_path)
         mlflow.log_artifact(keras_path)
 
-        # Save ONNX model
-        print(f"💾 Converting to ONNX for {station}...")
         onnx_path = f"{model_dir}/model_{station}.onnx"
         onnx_model, _ = tf2onnx.convert.from_keras(model)
         with open(onnx_path, "wb") as f:
