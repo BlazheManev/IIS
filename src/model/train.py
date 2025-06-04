@@ -14,8 +14,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
 from tensorflow.keras.callbacks import EarlyStopping
 
 from preprocess import DatePreprocessor, SlidingWindowTransformer
@@ -87,13 +87,14 @@ for file_name in os.listdir(data_dir):
 
     input_shape = (X_train.shape[1], X_train.shape[2])
 
-    def build_model(shape):
-        model = Sequential()
-        model.add(LSTM(50, return_sequences=True, input_shape=shape))
-        model.add(Dropout(0.2))
-        model.add(LSTM(50))
-        model.add(Dropout(0.2))
-        model.add(Dense(1))
+    def build_model(input_shape):
+        inputs = Input(shape=input_shape, name="input")
+        x = LSTM(50, return_sequences=True)(inputs)
+        x = Dropout(0.2)(x)
+        x = LSTM(50)(x)
+        x = Dropout(0.2)(x)
+        outputs = Dense(1, name="output")(x)
+        model = Model(inputs, outputs)
         model.compile(optimizer="adam", loss="mean_squared_error")
         return model
 
@@ -135,11 +136,11 @@ for file_name in os.listdir(data_dir):
 
         print(f"✅ {station} - MAE: {mae:.4f}, MSE: {mse:.4f}, RMSE: {rmse:.4f}")
 
-        # Save ONNX model
+        # Save ONNX model only
         print(f"💾 Converting to ONNX for {station}...")
+        spec = (tf.TensorSpec([None, *input_shape], tf.float32, name="input"),)
+        onnx_model, _ = tf2onnx.convert.from_keras(model, input_signature=spec, opset=13)
         onnx_path = f"{model_dir}/model_{station}.onnx"
-        spec = (tf.TensorSpec(model.input_shape, tf.float32, name="input"),)
-        onnx_model, _ = tf2onnx.convert.from_keras(model, input_signature=spec)
         with open(onnx_path, "wb") as f:
             f.write(onnx_model.SerializeToString())
         mlflow.log_artifact(onnx_path)
