@@ -8,6 +8,7 @@ import tensorflow as tf
 import tf2onnx
 import mlflow
 import mlflow.tensorflow
+import dagshub
 
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -36,9 +37,10 @@ random.seed(random_state)
 np.random.seed(random_state)
 tf.random.set_seed(random_state)
 
+dagshub.init(repo_owner="BlazheManev", repo_name="IIS", mlflow=True)
 mlflow.set_experiment("iis_training")
 
-# Loop through stations
+# Loop through all station files
 data_dir = "data/preprocessed/air"
 for file_name in os.listdir(data_dir):
     if not file_name.endswith(".csv"):
@@ -53,15 +55,13 @@ for file_name in os.listdir(data_dir):
         continue
 
     df = df[["date_to", target_col]]
-    date_preprocessor = DatePreprocessor("date_to")
-    df = date_preprocessor.fit_transform(df).drop(columns=["date_to"])
+    df = DatePreprocessor("date_to").fit_transform(df).drop(columns=["date_to"])
 
     if len(df) <= test_size + window_size:
         print(f"⚠️ Skipping {station}: not enough data.")
         continue
 
-    df_train = df.iloc[:-test_size]
-    df_test = df.iloc[-test_size:]
+    df_train, df_test = df.iloc[:-test_size], df.iloc[-test_size:]
 
     numeric_transformer = Pipeline([
         ("imputer", SimpleImputer(strategy="mean")),
@@ -136,17 +136,17 @@ for file_name in os.listdir(data_dir):
 
         print(f"✅ {station} - MAE: {mae:.4f}, MSE: {mse:.4f}, RMSE: {rmse:.4f}")
 
-        # Save ONNX model only
+        # ✅ Save ONNX model
         print(f"💾 Converting to ONNX for {station}...")
         spec = (tf.TensorSpec([None, *input_shape], tf.float32, name="input"),)
         onnx_model, _ = tf2onnx.convert.from_keras(model, input_signature=spec, opset=13)
-        onnx_path = f"{model_dir}/model_{station}.onnx"
+        onnx_path = os.path.join(model_dir, f"model_{station}.onnx")
         with open(onnx_path, "wb") as f:
             f.write(onnx_model.SerializeToString())
         mlflow.log_artifact(onnx_path)
 
         # Save pipeline
-        pipeline_path = f"{model_dir}/pipeline_{station}.pkl"
+        pipeline_path = os.path.join(model_dir, f"pipeline_{station}.pkl")
         joblib.dump(pipeline, pipeline_path)
         mlflow.log_artifact(pipeline_path)
 
