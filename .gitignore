@@ -1,3 +1,10 @@
-/gx
-/reports
 /models
+/reports
+
+# Ignore everything in gx/
+gx/*
+# But allow specific tracked files and folders
+!gx/run_checkpoint.py
+!gx/great_expectations.yml
+!gx/expectations/
+!gx/checkpoints/
