@@ -8,6 +8,7 @@ import tensorflow as tf
 import tf2onnx
 import mlflow
 import mlflow.tensorflow
+from dagshub import dagshub  # ✅ DagsHub integration
 
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -30,28 +31,18 @@ model_dir = params["model_path"]
 
 os.makedirs(model_dir, exist_ok=True)
 
-# Set seeds
+# Reproducibility
 os.environ["PYTHONHASHSEED"] = str(random_state)
 random.seed(random_state)
 np.random.seed(random_state)
 tf.random.set_seed(random_state)
 
-# MLflow tracking URI (DagsHub)
-mlflow.set_tracking_uri("https://dagshub.com/BlazheManev/IIS.mlflow")
+# ✅ DagsHub MLflow integration (no need for set_tracking_uri)
+dagshub.init(repo_owner="blazhemanev", repo_name="IIS", mlflow=True)
 
-# Ensure experiment exists
-experiment_name = "iis_training"
-if mlflow.get_experiment_by_name(experiment_name) is None:
-    mlflow.create_experiment(experiment_name)
-mlflow.set_experiment(experiment_name)
+mlflow.set_experiment("iis_training")
 
-# Epoch logger callback
-class EpochLogger(tf.keras.callbacks.Callback):
-    def on_epoch_end(self, epoch, logs=None):
-        logs = logs or {}
-        print(f"Epoch {epoch+1:02d} — loss: {logs.get('loss'):.4f} — val_loss: {logs.get('val_loss'):.4f}")
-
-# Loop through stations
+# Loop through station data
 data_dir = "data/preprocessed/air"
 for file_name in os.listdir(data_dir):
     if not file_name.endswith(".csv"):
@@ -113,8 +104,6 @@ for file_name in os.listdir(data_dir):
         return model
 
     with mlflow.start_run(run_name=f"train_{station}"):
-
-        # Log parameters
         mlflow.log_param("station", station)
         mlflow.log_param("test_size", test_size)
         mlflow.log_param("window_size", window_size)
@@ -126,23 +115,23 @@ for file_name in os.listdir(data_dir):
         model = build_model(input_shape)
         early_stopping = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True)
 
-        print("🚀 Starting model training...")
+        print(f"🚀 Training model for {station}...")
         model.fit(
             X_train, y_train,
             epochs=50,
             batch_size=32,
             validation_split=0.2,
-            callbacks=[early_stopping, EpochLogger()],
-            verbose=0
+            callbacks=[early_stopping],
+            verbose=1
         )
-        print("✅ Training completed.")
 
+        print(f"📊 Evaluating model for {station}...")
         y_pred = model.predict(X_test)
         mse = mean_squared_error(y_test, y_pred)
         mae = mean_absolute_error(y_test, y_pred)
         rmse = np.sqrt(mse)
 
-        print(f"📊 {station} — MAE: {mae:.4f}, MSE: {mse:.4f}, RMSE: {rmse:.4f}")
+        print(f"✅ {station} - MAE: {mae:.4f}, MSE: {mse:.4f}, RMSE: {rmse:.4f}")
         mlflow.log_metric("mae", mae)
         mlflow.log_metric("mse", mse)
         mlflow.log_metric("rmse", rmse)
@@ -153,6 +142,7 @@ for file_name in os.listdir(data_dir):
         mlflow.log_artifact(keras_path)
 
         # Save ONNX model
+        print(f"💾 Converting to ONNX for {station}...")
         onnx_path = f"{model_dir}/model_{station}.onnx"
         onnx_model, _ = tf2onnx.convert.from_keras(model)
         with open(onnx_path, "wb") as f:
@@ -164,4 +154,4 @@ for file_name in os.listdir(data_dir):
         joblib.dump(pipeline, pipeline_path)
         mlflow.log_artifact(pipeline_path)
 
-print("\n🏁 All stations trained successfully.")
+print("\n🏁 All stations processed.")
