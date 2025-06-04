@@ -14,8 +14,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, LSTM, Dense, Dropout
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
 
 from preprocess import DatePreprocessor, SlidingWindowTransformer
@@ -38,7 +38,7 @@ tf.random.set_seed(random_state)
 
 mlflow.set_experiment("iis_training")
 
-# Data directory
+# Loop through stations
 data_dir = "data/preprocessed/air"
 for file_name in os.listdir(data_dir):
     if not file_name.endswith(".csv"):
@@ -88,13 +88,12 @@ for file_name in os.listdir(data_dir):
     input_shape = (X_train.shape[1], X_train.shape[2])
 
     def build_model(shape):
-        inputs = Input(shape=shape)
-        x = LSTM(50, return_sequences=True)(inputs)
-        x = Dropout(0.2)(x)
-        x = LSTM(50)(x)
-        x = Dropout(0.2)(x)
-        outputs = Dense(1)(x)
-        model = Model(inputs, outputs)
+        model = Sequential()
+        model.add(LSTM(50, return_sequences=True, input_shape=shape))
+        model.add(Dropout(0.2))
+        model.add(LSTM(50))
+        model.add(Dropout(0.2))
+        model.add(Dense(1))
         model.compile(optimizer="adam", loss="mean_squared_error")
         return model
 
@@ -113,7 +112,14 @@ for file_name in os.listdir(data_dir):
         early_stop = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True)
 
         print(f"🚀 Training model for {station}...")
-        model.fit(X_train, y_train, epochs=50, batch_size=32, validation_split=0.2, callbacks=[early_stop], verbose=1)
+        model.fit(
+            X_train, y_train,
+            epochs=50,
+            batch_size=32,
+            validation_split=0.2,
+            callbacks=[early_stop],
+            verbose=1
+        )
 
         print(f"📊 Evaluating model for {station}...")
         y_pred = model.predict(X_test)
@@ -129,9 +135,11 @@ for file_name in os.listdir(data_dir):
 
         print(f"✅ {station} - MAE: {mae:.4f}, MSE: {mse:.4f}, RMSE: {rmse:.4f}")
 
-        # Save ONNX model only
+        # Save ONNX model
+        print(f"💾 Converting to ONNX for {station}...")
         onnx_path = f"{model_dir}/model_{station}.onnx"
-        onnx_model, _ = tf2onnx.convert.from_keras(model)
+        spec = (tf.TensorSpec(model.input_shape, tf.float32, name="input"),)
+        onnx_model, _ = tf2onnx.convert.from_keras(model, input_signature=spec)
         with open(onnx_path, "wb") as f:
             f.write(onnx_model.SerializeToString())
         mlflow.log_artifact(onnx_path)
