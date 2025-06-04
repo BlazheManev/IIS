@@ -54,3 +54,43 @@ stages:
       md5: f5bb56efa245aedf90035ea40dcad41f.dir
       size: 29245
       nfiles: 23
+  train:
+    cmd: "poetry run python src/model/train.py\ngit commit -am \"Updated models on
+      $(date) with DVC pipeline and GitHub workflows\" || true\ngit push || true\n
+      dvc push || true\n"
+    deps:
+    - path: data/preprocessed/air/
+      hash: md5
+      md5: d11eff4ac7d3d287898265a3d770f86a.dir
+      size: 99973
+      nfiles: 23
+    - path: data/reference/air
+      hash: md5
+      md5: f5bb56efa245aedf90035ea40dcad41f.dir
+      size: 29245
+      nfiles: 23
+    - path: gx/uncommitted
+      hash: md5
+      md5: c42707352926fdadcba16bc6c78ac42b.dir
+      size: 18480776
+      nfiles: 476
+    - path: src/model/preprocess.py
+      hash: md5
+      md5: 30f7c69571ad58b07670955060956ea8
+      size: 1433
+    - path: src/model/train.py
+      hash: md5
+      md5: 17bdf055b94712805acdc935337f7bba
+      size: 3702
+    params:
+      params.yaml:
+        train.random_state: 42
+        train.target_col: PM10
+        train.test_size: 48
+        train.window_size: 12
+    outs:
+    - path: models/
+      hash: md5
+      md5: 063bee3b2d353096b7c7ce716d6cc08f.dir
+      size: 8544714
+      nfiles: 42
