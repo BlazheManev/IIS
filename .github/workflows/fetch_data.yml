@@ -18,12 +18,10 @@ jobs:
           fetch-depth: 0
 
       - name: Install Poetry
-        run: |
-          pipx install poetry
+        run: pipx install poetry
 
       - name: Install DVC
-        run: |
-          pip install dvc[s3]
+        run: pip install dvc[s3]
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -37,8 +35,7 @@ jobs:
           git config --local user.name "GitHub Actions"
 
       - name: Install dependencies
-        run: |
-          poetry install --no-interaction --no-root
+        run: poetry install --no-interaction --no-root
 
       - name: DVC setup remote
         run: |
@@ -52,19 +49,26 @@ jobs:
           dvc repro
           dvc push
           git add dvc.lock
-          git commit -m "Update dvc.lock on `date` with GitHub Actions" || true
+          git commit -m "Update dvc.lock on $(date) with GitHub Actions" || true
 
-      - name: Push changes
+      - name: Push changes to Git
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.PAT_TOKEN }}
 
-      - name: Deploy DataDocs to Netlify
+      - name: Merge reports and DataDocs for Netlify
+        run: |
+          mkdir -p publish/reports
+          mkdir -p publish/data_docs
+          cp -r reports/* publish/reports/ || true
+          cp -r gx/uncommitted/data_docs/local_site/* publish/data_docs/ || true
+
+      - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@v2.0.0
         with:
-          publish-dir: "./gx/uncommitted/data_docs/local_site"
+          publish-dir: ./publish
           production-deploy: true
-          deploy-message: Auto-deployed from GitHub Actions
+          deploy-message: "Auto-deployed both reports and GX docs from GitHub Actions"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
