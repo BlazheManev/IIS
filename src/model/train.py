@@ -8,16 +8,15 @@ import tensorflow as tf
 import tf2onnx
 import mlflow
 import mlflow.tensorflow
-import dagshub
 
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
+from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import LSTM, Dense, Dropout, Input
-from tensorflow.keras.callbacks import EarlyStopping
 
 from preprocess import DatePreprocessor, SlidingWindowTransformer
 
@@ -37,12 +36,18 @@ random.seed(random_state)
 np.random.seed(random_state)
 tf.random.set_seed(random_state)
 
-dagshub.init(repo_owner="BlazheManev", repo_name="IIS", mlflow=True)
-os.environ["MLFLOW_TRACKING_USERNAME"] = os.getenv("MLFLOW_TRACKING_USERNAME")
-os.environ["MLFLOW_TRACKING_PASSWORD"] = os.getenv("MLFLOW_TRACKING_PASSWORD")
+# CI/CD (GitHub Actions) or local?
+if os.getenv("CI"):  # GitHub Actions (CI/CD)
+    mlflow.set_tracking_uri("https://dagshub.com/BlazheManev/IIS.mlflow")
+    os.environ["MLFLOW_TRACKING_USERNAME"] = os.getenv("MLFLOW_TRACKING_USERNAME")
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = os.getenv("MLFLOW_TRACKING_PASSWORD")
+else:  # Local
+    import dagshub
+    dagshub.init(repo_owner="BlazheManev", repo_name="IIS", mlflow=True)
+
 mlflow.set_experiment("iis_training")
 
-# Loop through all station files
+# Loop through stations
 data_dir = "data/preprocessed/air"
 for file_name in os.listdir(data_dir):
     if not file_name.endswith(".csv"):
@@ -57,13 +62,15 @@ for file_name in os.listdir(data_dir):
         continue
 
     df = df[["date_to", target_col]]
-    df = DatePreprocessor("date_to").fit_transform(df).drop(columns=["date_to"])
+    date_preprocessor = DatePreprocessor("date_to")
+    df = date_preprocessor.fit_transform(df).drop(columns=["date_to"])
 
     if len(df) <= test_size + window_size:
         print(f"⚠️ Skipping {station}: not enough data.")
         continue
 
-    df_train, df_test = df.iloc[:-test_size], df.iloc[-test_size:]
+    df_train = df.iloc[:-test_size]
+    df_test = df.iloc[-test_size:]
 
     numeric_transformer = Pipeline([
         ("imputer", SimpleImputer(strategy="mean")),
@@ -138,17 +145,17 @@ for file_name in os.listdir(data_dir):
 
         print(f"✅ {station} - MAE: {mae:.4f}, MSE: {mse:.4f}, RMSE: {rmse:.4f}")
 
-        # ✅ Save ONNX model
+        # Save ONNX model
         print(f"💾 Converting to ONNX for {station}...")
         spec = (tf.TensorSpec([None, *input_shape], tf.float32, name="input"),)
         onnx_model, _ = tf2onnx.convert.from_keras(model, input_signature=spec, opset=13)
-        onnx_path = os.path.join(model_dir, f"model_{station}.onnx")
+        onnx_path = f"{model_dir}/model_{station}.onnx"
         with open(onnx_path, "wb") as f:
             f.write(onnx_model.SerializeToString())
         mlflow.log_artifact(onnx_path)
 
-        # Save pipeline
-        pipeline_path = os.path.join(model_dir, f"pipeline_{station}.pkl")
+        # Save preprocessing pipeline
+        pipeline_path = f"{model_dir}/pipeline_{station}.pkl"
         joblib.dump(pipeline, pipeline_path)
         mlflow.log_artifact(pipeline_path)
 
