@@ -2,7 +2,7 @@ stages:
   preprocess:
     cmd: |
       poetry run python src/data/preprocess_air_data.py
-      git commit -am "Updated preprocessed air data on `date` with DVC pipeline and GitHub workflows" || true
+      git commit -am "Updated preprocessed air data on $(date) with DVC pipeline and GitHub workflows" || true
       git push || true
       dvc push || true
     deps:
@@ -20,7 +20,7 @@ stages:
     deps:
     - data/preprocessed/air/
     outs:
-    - gx:
+    - gx/uncommitted:
         persist: true
 
   test_data:
@@ -30,5 +30,26 @@ stages:
     - data/preprocessed/air/
     - src/data/test_data.py
     outs:
-    - reports/:
+    - data/reference/air:
+        persist: true
+
+  train:
+    cmd: |
+      poetry run python src/model/train.py
+      git commit -am "Updated models on $(date) with DVC pipeline and GitHub workflows" || true
+      git push || true
+      dvc push || true
+    deps:
+    - src/model/preprocess.py
+    - src/model/train.py
+    - data/preprocessed/air/
+    - gx/uncommitted
+    - data/reference/air
+    params:
+    - train.test_size
+    - train.random_state
+    - train.window_size
+    - train.target_col
+    outs:
+    - models/:
         persist: true
