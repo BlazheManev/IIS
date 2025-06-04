@@ -5,6 +5,7 @@ import yaml
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import tf2onnx
 import mlflow
 import mlflow.tensorflow
 
@@ -19,7 +20,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 
 from preprocess import DatePreprocessor, SlidingWindowTransformer
 
-# Load training params from YAML
+# Load training params
 params = yaml.safe_load(open("params.yaml"))["train"]
 test_size = params["test_size"]
 window_size = params["window_size"]
@@ -29,17 +30,17 @@ model_dir = params["model_path"]
 
 os.makedirs(model_dir, exist_ok=True)
 
-# Set seeds for reproducibility
+# Set seeds
 os.environ["PYTHONHASHSEED"] = str(random_state)
 random.seed(random_state)
 np.random.seed(random_state)
 tf.random.set_seed(random_state)
 
-# MLflow tracking config (DagsHub)
+# MLflow tracking URI
 mlflow.set_tracking_uri("https://dagshub.com/BlazheManev/IIS.mlflow")
 mlflow.set_experiment("iis_training")
 
-# Scan all station CSVs
+# Loop through stations
 data_dir = "data/preprocessed/air"
 for file_name in os.listdir(data_dir):
     if not file_name.endswith(".csv"):
@@ -54,8 +55,6 @@ for file_name in os.listdir(data_dir):
         continue
 
     df = df[["date_to", target_col]]
-    print(f"Original data shape: {df.shape}")
-
     date_preprocessor = DatePreprocessor("date_to")
     df = date_preprocessor.fit_transform(df)
     df = df.drop(columns=["date_to"])
@@ -103,7 +102,6 @@ for file_name in os.listdir(data_dir):
         return model
 
     with mlflow.start_run(run_name=f"train_{station}"):
-        # Log parameters
         mlflow.log_param("station", station)
         mlflow.log_param("test_size", test_size)
         mlflow.log_param("window_size", window_size)
@@ -124,23 +122,27 @@ for file_name in os.listdir(data_dir):
             verbose=1
         )
 
-        # Evaluate
         y_pred = model.predict(X_test)
         mse = mean_squared_error(y_test, y_pred)
         mae = mean_absolute_error(y_test, y_pred)
         rmse = np.sqrt(mse)
 
         print(f"{station} - MAE: {mae:.4f}, MSE: {mse:.4f}, RMSE: {rmse:.4f}")
-
-        # Log final metrics
         mlflow.log_metric("mae", mae)
         mlflow.log_metric("mse", mse)
         mlflow.log_metric("rmse", rmse)
 
-        # Save model and pipeline
-        model_path = f"{model_dir}/model_{station}.keras"
-        model.save(model_path)
-        mlflow.log_artifact(model_path)
+        # Save Keras model
+        keras_path = f"{model_dir}/model_{station}.keras"
+        model.save(keras_path)
+        mlflow.log_artifact(keras_path)
+
+        # Save ONNX model
+        onnx_path = f"{model_dir}/model_{station}.onnx"
+        onnx_model, _ = tf2onnx.convert.from_keras(model)
+        with open(onnx_path, "wb") as f:
+            f.write(onnx_model.SerializeToString())
+        mlflow.log_artifact(onnx_path)
 
         pipeline_path = f"{model_dir}/pipeline_{station}.pkl"
         joblib.dump(pipeline, pipeline_path)
