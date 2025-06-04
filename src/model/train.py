@@ -38,6 +38,8 @@ np.random.seed(random_state)
 tf.random.set_seed(random_state)
 
 dagshub.init(repo_owner="BlazheManev", repo_name="IIS", mlflow=True)
+os.environ["MLFLOW_TRACKING_USERNAME"] = os.getenv("MLFLOW_TRACKING_USERNAME")
+os.environ["MLFLOW_TRACKING_PASSWORD"] = os.getenv("MLFLOW_TRACKING_PASSWORD")
 mlflow.set_experiment("iis_training")
 
 # Loop through all station files
