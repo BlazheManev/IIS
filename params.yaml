@@ -1,3 +1,10 @@
+train:
+  test_size: 48
+  window_size: 12
+  target_col: "PM10"
+  random_state: 42
+  model_path: "models/model.h5"
+
 fetch:
   url: "https://www.arso.gov.si/xml/zrak/ones_zrak_urni_podatki_7dni.xml"
 
