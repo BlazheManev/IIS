@@ -80,8 +80,8 @@ stages:
       size: 1390
     - path: src/model/train.py
       hash: md5
-      md5: a2ab852ec0d9e18e5da572c137fc1f05
-      size: 3586
+      md5: 0965122e757eeca09383028fed4880f2
+      size: 4779
     params:
       params.yaml:
         train.random_state: 42
@@ -91,6 +91,6 @@ stages:
     outs:
     - path: models/
       hash: md5
-      md5: d0cdb3ba9fd1499148fe7bb6ae214dfe.dir
-      size: 8545218
-      nfiles: 42
+      md5: 600499dce77d251b5816af1458946d01.dir
+      size: 11555729
+      nfiles: 84
