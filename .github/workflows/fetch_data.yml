@@ -42,24 +42,44 @@ jobs:
           dvc remote modify origin --local access_key_id ${{ secrets.DAGSHUB_ACCESS_KEY_ID }}
           dvc remote modify origin --local secret_access_key ${{ secrets.DAGSHUB_SECRET_ACCESS_KEY }}
 
+      - name: DVC pull & status
+        run: |
+          dvc pull --force
+          dvc status
+
+      - name: Check if 'train' stage will run
+        id: should_run
+        run: |
+          STAGES=$(dvc repro --force --dry | grep -o 'Stage .*' || true)
+          echo "$STAGES"
+          if echo "$STAGES" | grep -q "train"; then
+            echo "✅ Training will run."
+            echo "run_train=true" >> $GITHUB_OUTPUT
+          else
+            echo "ℹ️ Skipping training and deploy — no changes detected."
+            echo "run_train=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Run DVC pipeline
+        if: steps.should_run.outputs.run_train == 'true'
         env:
           MLFLOW_TRACKING_USERNAME: ${{ secrets.MLFLOW_TRACKING_USERNAME }}
           MLFLOW_TRACKING_PASSWORD: ${{ secrets.MLFLOW_TRACKING_PASSWORD }}
         run: |
-          dvc pull --force
-          dvc status
           dvc repro
           dvc push
           git add dvc.lock
           git commit -m "Update dvc.lock on $(date) with GitHub Actions" || true
+          git push || true
 
       - name: Push changes to Git
+        if: steps.should_run.outputs.run_train == 'true'
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.PAT_TOKEN }}
 
       - name: Merge reports and DataDocs for Netlify
+        if: steps.should_run.outputs.run_train == 'true'
         run: |
           mkdir -p publish/reports
           mkdir -p publish/data_docs
@@ -67,11 +87,12 @@ jobs:
           cp -r gx/uncommitted/data_docs/local_site/* publish/data_docs/ || true
 
       - name: Deploy to Netlify
+        if: steps.should_run.outputs.run_train == 'true'
         uses: nwtgck/actions-netlify@v2.0.0
         with:
           publish-dir: ./publish
           production-deploy: true
-          deploy-message: "Auto-deployed both reports and GX docs from GitHub Actions"
+          deploy-message: "Auto-deployed updated reports from GitHub Actions"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
