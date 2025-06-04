@@ -1,0 +1,6 @@
+outs:
+- md5: f5bb56efa245aedf90035ea40dcad41f.dir
+  size: 29245
+  nfiles: 23
+  hash: md5
+  path: air
