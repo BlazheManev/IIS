@@ -44,7 +44,7 @@ jobs:
 
       - name: Run DVC pipeline
         run: |
-          dvc pull
+          dvc pull --force
           dvc status
           dvc repro
           dvc push
