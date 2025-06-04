@@ -17,7 +17,8 @@ dependencies = [
     "great-expectations (==0.18.21)",
     "notebook (>=7.4.3,<8.0.0)",
     "ipykernel (>=6.29.5,<7.0.0)",
-    "evidently (>=0.7.1,<0.8.0)"
+    "evidently (>=0.7.1,<0.8.0)",
+    "tensorflow (>=2.19.0,<3.0.0)",
 ]
 
 
