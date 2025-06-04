@@ -45,7 +45,7 @@ else:  # Local
     import dagshub
     dagshub.init(repo_owner="BlazheManev", repo_name="IIS", mlflow=True)
 
-mlflow.set_experiment("iis_training")
+mlflow.set_experiment("iis_training_vaje")
 
 # Loop through stations
 data_dir = "data/preprocessed/air"
