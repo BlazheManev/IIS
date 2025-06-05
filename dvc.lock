@@ -56,8 +56,8 @@ stages:
       nfiles: 23
   train:
     cmd: "poetry run python src/model/train.py\ngit commit -am \"Updated models on
-      $(date) with DVC pipeline and GitHub workflows\" || true\ngit push || true\n
-      dvc push || true\n"
+      $(date) with DVC pipeline and GitHub workflows\" || true\ngit push || true\n\
+      \ dvc push || true\n"
     deps:
     - path: data/preprocessed/air/
       hash: md5
@@ -101,13 +101,13 @@ stages:
     deps:
     - path: src/data/fetch_air_data.py
       hash: md5
-      md5: 3718a5edaff46bac941e2594b11cd822
-      size: 1110
+      md5: b77278e73038361efbf73a3115848152
+      size: 1075
     params:
       params.yaml:
         fetch.url: https://www.arso.gov.si/xml/zrak/ones_zrak_urni_podatki_7dni.xml
     outs:
     - path: data/raw/air/air_data.xml
       hash: md5
-      md5: a53503d623ac79cec999ac16d9a6adfb
-      size: 1153272
+      md5: fac4a19548369506f0e75141d6b6a176
+      size: 1149847
