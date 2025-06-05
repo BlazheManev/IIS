@@ -11,8 +11,8 @@ stages:
       size: 1153272
     - path: src/data/preprocess_air_data.py
       hash: md5
-      md5: 4c05872692adee6ae1662f50b0d90a7f
-      size: 2106
+      md5: 43d6fa448c8de2b4c3162d57e58691c8
+      size: 2170
     params:
       params.yaml:
         preprocess.station:
@@ -46,8 +46,8 @@ stages:
       nfiles: 23
     - path: src/data/test_data.py
       hash: md5
-      md5: 002725e1097c8e894fbe0d26e0517330
-      size: 3278
+      md5: d39fc58060e5727e2cd45d99c91d3468
+      size: 3374
     outs:
     - path: data/reference/air
       hash: md5
@@ -56,7 +56,7 @@ stages:
       nfiles: 23
   train:
     cmd: "poetry run python src/model/train.py\ngit commit -am \"Updated models on
-      $(date) with DVC pipeline and GitHub workflows\" || true\ngit push || true\n\
+      $(date) with DVC pipeline and GitHub workflows\" || true\ngit push || true\n
       dvc push || true\n"
     deps:
     - path: data/preprocessed/air/
@@ -76,12 +76,12 @@ stages:
       nfiles: 614
     - path: src/model/preprocess.py
       hash: md5
-      md5: 497d8df1527cd90a4fb45391f0826db3
-      size: 1390
+      md5: 30f7c69571ad58b07670955060956ea8
+      size: 1433
     - path: src/model/train.py
       hash: md5
-      md5: b9d1ebb21a0e9a0930634e608293dee4
-      size: 5222
+      md5: 2d20f7f4df9e0deab270896b3ec21ac6
+      size: 5384
     params:
       params.yaml:
         train.random_state: 42
@@ -94,3 +94,20 @@ stages:
       md5: 8c314f1ab5f8f5c7ffb19e4039e5a113.dir
       size: 11556030
       nfiles: 84
+  fetch:
+    cmd: "poetry run python src/data/fetch_air_data.py\ngit commit -am \"Updated raw
+      air data on `date` with DVC pipeline and GitHub workflows\" || true\ngit push
+      || true\ndvc push || true\n"
+    deps:
+    - path: src/data/fetch_air_data.py
+      hash: md5
+      md5: 3718a5edaff46bac941e2594b11cd822
+      size: 1110
+    params:
+      params.yaml:
+        fetch.url: https://www.arso.gov.si/xml/zrak/ones_zrak_urni_podatki_7dni.xml
+    outs:
+    - path: data/raw/air/air_data.xml
+      hash: md5
+      md5: a53503d623ac79cec999ac16d9a6adfb
+      size: 1153272
