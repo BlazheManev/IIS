@@ -33,9 +33,9 @@ stages:
     outs:
     - path: gx/uncommitted
       hash: md5
-      md5: 7357155c072de9c643760f709ec0e40d.dir
-      size: 21208073
-      nfiles: 568
+      md5: 163233a2108aa3eff449a4049bfd679d.dir
+      size: 22651520
+      nfiles: 614
   test_data:
     cmd: "poetry run python src/data/test_data.py\n"
     deps:
