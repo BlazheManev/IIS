@@ -57,12 +57,12 @@ stages:
   train:
     cmd: "poetry run python src/model/train.py\ngit commit -am \"Updated models on
       $(date) with DVC pipeline and GitHub workflows\" || true\ngit push || true\n\
-      \ dvc push || true\n"
+      dvc push || true\n"
     deps:
     - path: data/preprocessed/air/
       hash: md5
-      md5: cafc65b25e37c827a214a74cf5f9efaf.dir
-      size: 96086
+      md5: 506a021ff00e70176acc98a90a819fb1.dir
+      size: 95948
       nfiles: 23
     - path: data/reference/air
       hash: md5
@@ -71,17 +71,17 @@ stages:
       nfiles: 23
     - path: gx/uncommitted
       hash: md5
-      md5: 163233a2108aa3eff449a4049bfd679d.dir
-      size: 22651520
-      nfiles: 614
+      md5: 475626d3602d7fdbb1d8dd8dc39a2f56.dir
+      size: 24094940
+      nfiles: 660
     - path: src/model/preprocess.py
       hash: md5
-      md5: 30f7c69571ad58b07670955060956ea8
-      size: 1433
+      md5: 497d8df1527cd90a4fb45391f0826db3
+      size: 1390
     - path: src/model/train.py
       hash: md5
-      md5: 2d20f7f4df9e0deab270896b3ec21ac6
-      size: 5384
+      md5: b9d1ebb21a0e9a0930634e608293dee4
+      size: 5222
     params:
       params.yaml:
         train.random_state: 42
@@ -91,8 +91,8 @@ stages:
     outs:
     - path: models/
       hash: md5
-      md5: 8c314f1ab5f8f5c7ffb19e4039e5a113.dir
-      size: 11556030
+      md5: a9c7cc71f095cd161e6c7385a51b66d6.dir
+      size: 11556115
       nfiles: 84
   fetch:
     cmd: "poetry run python src/data/fetch_air_data.py\ngit commit -am \"Updated raw
