@@ -105,9 +105,10 @@ stages:
       size: 1075
     params:
       params.yaml:
-        fetch.url: https://www.arso.gov.si/xml/zrak/ones_zrak_urni_podatki_7dni.xml
+        fetch.url: 
+          https://www.arso.gov.si/xml/zrak/ones_zrak_urni_podatki_7dni.xml
     outs:
     - path: data/raw/air/air_data.xml
       hash: md5
-      md5: 871cb9c868a2600a367c1fbb8ba6fe6d
-      size: 1149611
+      md5: f6a2ecbf62aa6e950a51337ed41b080f
+      size: 1150336
