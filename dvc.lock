@@ -110,5 +110,5 @@ stages:
     outs:
     - path: data/raw/air/air_data.xml
       hash: md5
-      md5: 41ddb81e393eebdc367c1e0616cf89b8
-      size: 1151253
+      md5: 2cdfa7ed325fa5fa61f7e742add92d6c
+      size: 1151367
